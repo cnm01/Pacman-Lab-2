@@ -263,12 +263,12 @@ class CornerSeekingAgent(Agent):
 
 
             #if at a intersection continue going straight
-            # 2/3 probability of going stright, 1/3 probability of random choice
+            # 1/2 probability of going stright, 1/2 probability of random choice
             if self.last in legalMoves:
                 print "Probably going straight/ maybe random choice"
                 legalMoves.remove(Directions.STOP)
                 legalMoves.remove(self.last)
-                choices = [self.last, self.last, random.choice(legalMoves)]
+                choices = [self.last, random.choice(legalMoves)]
                 self.last = random.choice(choices)
                 return self.last
 

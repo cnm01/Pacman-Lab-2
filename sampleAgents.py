@@ -147,53 +147,136 @@ class CornerSeekingAgent(Agent):
 
         def __init__(self):
              self.visited = []
+             self.last = Directions.STOP
 
         def getAction(self,state):
-            # print api.whereAmI(state)
-            # print state.getLegalPacmanActions()
-            print "Legal moves: " , api.legalActions(state)
 
             legalMoves = state.getLegalPacmanActions()
             currentDirection = state.getPacmanState().configuration.direction
 
-            #always go left if possible to visit outer wall
-            if api.whereAmI(state) not in self.visited:
+            #if all outermost walls already explored, go towards food if it can be seen...
+            if len(legalMoves) > 3 and api.whereAmI(state) in self.visited:
+
+                return self.foodWithin5(state, currentDirection, legalMoves)
+
+            #always go left to visit outermost walls
+            else:
                 self.visited.append(api.whereAmI(state))
-                #print self.visited
 
                 if currentDirection == Directions.STOP:
                     currentDirection = Directions.NORTH
-                # left = Directions.LEFT[currentDirection]
                 if Directions.LEFT[currentDirection] in legalMoves:
-                    return Directions.LEFT[currentDirection]
+                    self.last = Directions.LEFT[currentDirection]
+                    return self.last
                 if currentDirection in legalMoves:
-                    return currentDirection
+                    self.last = currentDirection
+                    return self.last
                 if Directions.RIGHT[currentDirection] in legalMoves:
-                    return Directions.RIGHT[currentDirection]
+                    self.last = Directions.RIGHT[currentDirection]
+                    return self.last
                 if Directions.LEFT[Directions.LEFT[currentDirection]] in legalMoves:
-                    return Directions.LEFT[Directions.LEFT[currentDirection]]
-                return Directions.STOP
-
-            else:
-                if len(legalMoves) > 4:
-                    #go to space that hasnt been visited before if possible otherwise go right
-                    return random.choice([currentDirection,  Directions.RIGHT[currentDirection]])
-                    #api.makeMove(random.choice(legal), legal)
-
-                if Directions.LEFT[currentDirection] in legalMoves:
-                    return Directions.LEFT[currentDirection]
-                if currentDirection in legalMoves:
-                    return currentDirection
-                if Directions.RIGHT[currentDirection] in legalMoves:
-                    return Directions.RIGHT[currentDirection]
-                if Directions.LEFT[Directions.LEFT[currentDirection]] in legalMoves:
-                    return Directions.LEFT[Directions.LEFT[currentDirection]]
+                    self.last = Directions.LEFT[Directions.LEFT[currentDirection]]
+                    return self.last
                 return Directions.STOP
 
 
 
+        def foodWithin2(self, state, currentDirection, legalMoves):
+            cur = api.whereAmI(state)
+
+            #north
+            ##can see food within 2 units
+            if (cur[0], cur[1]+1) in api.food(state) or (cur[0], cur[1]+2) in api.food(state):
+                print "n"
+                return Directions.NORTH
+            #east
+            ##can see food within 2 units
+            if (cur[0]+1, cur[1]) in api.food(state) or (cur[0]+2, cur[1]) in api.food(state):
+                print "e"
+                return Directions.EAST
+            #south
+            ##can see food within 2 units
+            if (cur[0], cur[1]-1) in api.food(state) or (cur[0], cur[1]-2) in api.food(state):
+                print "s"
+                return Directions.SOUTH
+            #west
+            ##can see food within 2 units
+            if (cur[0]-1, cur[1]) in api.food(state) or (cur[0]+2, cur[1]) in api.food(state):
+                print "w"
+                return Directions.WEST
 
 
+            legalMoves.remove(Directions.STOP)
+            return random.choice(legalMoves)
+
+        #if pacman can see food 5 units or closer to current
+        # position, that isnt blocked by a wall, go towards it
+        def foodWithin5(self, state, currentDirection, legalMoves):
+            cur = api.whereAmI(state)
+
+            for x in range(1, 6):
+                #north
+                ##can see food within 5 units north of current pos, not blocked by wall
+                if (cur[0], cur[1]+x) in api.food(state):
+                    noWall = True
+                    for y in range(cur[1], cur[1]+x+1):
+                        #if wall is detected between food and pacman
+                        if (cur[0], y) in api.walls(state):
+                            noWall = False
+                    if noWall:
+                        print "Food seen ", x, " north"
+                        last = Directions.NORTH
+                        return Directions.NORTH
+                #east
+                ##can see food within 5 units east of current pos, not blocked by wall
+                if (cur[0]+x, cur[1]) in api.food(state):
+                    noWall = True
+                    for y in range(cur[0], cur[0]+x+1):
+                        if (y, cur[1]) in api.walls(state):
+                            noWall = False
+                    if noWall:
+                        print "Food seen ", x, " east"
+                        last = Directions.EAST
+                        return Directions.EAST
+                #south
+                ##can see food within 5 units south of current pos, not blocked by wall
+                if (cur[0], cur[1]-x) in api.food(state):
+                    noWall = True
+                    for y in range(cur[1]-x, cur[1]+1):
+                        if (cur[0], y) in api.walls(state):
+                            noWall = False
+                    if noWall:
+                        print "Food seen ", x, " south"
+                        last = Directions.SOUTH
+                        return Directions.SOUTH
+                #west
+                ##can see food within 5 units west of current pos, not blocked by wall
+                if (cur[0]-x, cur[1]) in api.food(state):
+                    noWall = True
+                    for y in range(cur[0]-x, cur[0]+1):
+                        if (y, cur[1]) in api.walls(state):
+                            noWall = False
+                    if noWall:
+                        print "Food seen ", x, " west"
+                        last = Directions.WEST
+                        return Directions.WEST
+
+
+            #if at a intersection continue going straight
+            # 2/3 probability of going stright, 1/3 probability of random choice
+            if self.last in legalMoves:
+                print "Probably going straight/ maybe random choice"
+                legalMoves.remove(Directions.STOP)
+                legalMoves.remove(self.last)
+                choices = [self.last, self.last, random.choice(legalMoves)]
+                self.last = random.choice(choices)
+                return self.last
+
+            #go random direction at intersection
+            legalMoves.remove(Directions.STOP)
+            print "Making random choice"
+            self.last = random.choice(legalMoves)
+            return self.last
 
 
 

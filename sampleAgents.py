@@ -151,135 +151,54 @@ class CornerSeekingAgent(Agent):
         def getAction(self,state):
             # print api.whereAmI(state)
             # print state.getLegalPacmanActions()
+            print "Legal moves: " , api.legalActions(state)
+
+            legalMoves = state.getLegalPacmanActions()
+            currentDirection = state.getPacmanState().configuration.direction
 
             #always go left if possible to visit outer wall
             if api.whereAmI(state) not in self.visited:
                 self.visited.append(api.whereAmI(state))
                 #print self.visited
-                legal = state.getLegalPacmanActions()
-                current = state.getPacmanState().configuration.direction
-                if current == Directions.STOP:
-                    current = Directions.NORTH
-                left = Directions.LEFT[current]
-                if left in legal:
-                    return left
-                if current in legal:
-                    return current
-                if Directions.RIGHT[current] in legal:
-                    return Directions.RIGHT[current]
-                if Directions.LEFT[left] in legal:
-                    return Directions.LEFT[left]
-                return Directions.STOP
 
-            else:
-                #if square already visited, only go to one that hasnt been visited on next move
-                if api.whereAmI(state) not in self.visited:
-                    self.visited.append(api.whereAmI(state))
-
-                #print self.visited
-                legalMoves = state.getLegalPacmanActions()
-                currentDirection = state.getPacmanState().configuration.direction
                 if currentDirection == Directions.STOP:
                     currentDirection = Directions.NORTH
-
-                #go left if possible
-                if Directions.LEFT[currentDirection] in legalMoves and self.nextCoord(legalMoves, api.whereAmI(state), currentDirection) not in self.visited:
+                # left = Directions.LEFT[currentDirection]
+                if Directions.LEFT[currentDirection] in legalMoves:
                     return Directions.LEFT[currentDirection]
-                #go straight if cant go left
-                if currentDirection in legalMoves and self.nextCoord(legalMoves, api.whereAmI(state), currentDirection) not in self.visited:
-                    return currentDirection
-                #go right if cant go straight
-                if Directions.RIGHT[currentDirection] in legalMoves and self.nextCoord(legalMoves, api.whereAmI(state), currentDirection) not in self.visited:
-                    return Directions.RIGHT[currentDirection]
-                #go back if cant go right
-                if Directions.LEFT[Directions.LEFT[currentDirection]] in legalMoves and self.nextCoord(legalMoves, api.whereAmI(state), currentDirection) not in self.visited:
-                    return Directions.LEFT[left]
-
-                #if no choice but to visit previously visited square, go left as usual
-                if currentDirection == Directions.STOP:
-                    currentDirection = Directions.NORTH
-                left = Directions.LEFT[currentDirection]
-                if left in legalMoves:
-                    return left
                 if currentDirection in legalMoves:
                     return currentDirection
                 if Directions.RIGHT[currentDirection] in legalMoves:
                     return Directions.RIGHT[currentDirection]
-                if Directions.LEFT[left] in legalMoves:
-                    return Directions.LEFT[left]
+                if Directions.LEFT[Directions.LEFT[currentDirection]] in legalMoves:
+                    return Directions.LEFT[Directions.LEFT[currentDirection]]
+                return Directions.STOP
+
+            else:
+                if len(legalMoves) > 4:
+                    #go to space that hasnt been visited before if possible otherwise go right
+                    return random.choice([currentDirection,  Directions.RIGHT[currentDirection]])
+                    #api.makeMove(random.choice(legal), legal)
+
+                if Directions.LEFT[currentDirection] in legalMoves:
+                    return Directions.LEFT[currentDirection]
+                if currentDirection in legalMoves:
+                    return currentDirection
+                if Directions.RIGHT[currentDirection] in legalMoves:
+                    return Directions.RIGHT[currentDirection]
+                if Directions.LEFT[Directions.LEFT[currentDirection]] in legalMoves:
+                    return Directions.LEFT[Directions.LEFT[currentDirection]]
                 return Directions.STOP
 
 
-        #find coord of next move
-        def nextCoord(self, legalMoves, currentCoord, currentDirection):
 
-            #go left if possible
-            if Directions.LEFT[currentDirection] in legalMoves:
-                #if currentDirection is north; x-1
-                if currentDirection == Directions.NORTH:
-                    nextCoord = (currentCoord[0]-1, currentCoord[1])
-                elif currentDirection == Directions.EAST:
-                    #if currentD is east; y+1
-                    nextCoord = (currentCoord[0], currentCoord[1]+1)
-                elif currentDirection == Directions.SOUTH:
-                    #if currentD is south; x+1
-                    nextCoord = (currentCoord[0]+1, currentCoord[1])
-                elif currentDirection == Directions.WEST:
-                    #if currentD is west; y-1
-                    nextCoord = (currentCoord[0], currentCoord[1]-1)
 
-                return nextCoord
 
-            #go straight if cant go left
-            if currentDirection in legalMoves:
-                #if currentDirection is north; y+1
-                if currentDirection == Directions.NORTH:
-                    nextCoord = (currentCoord[0], currentCoord[1]+1)
-                elif currentDirection == Directions.EAST:
-                #if currentD is east; x+1
-                    nextCoord = (currentCoord[0]+1, currentCoord[1])
-                elif currentDirection == Directions.SOUTH:
-                    #if currentD is south; y-1
-                    nextCoord = (currentCoord[0], currentCoord[1]-1)
-                elif currentDirection == Directions.WEST:
-                    #if currentD is west; x-1
-                    nextCoord = (currentCoord[0]-1, currentCoord[1])
 
-                return nextCoord
 
-            #go right if cant go straight
-            if Directions.RIGHT[currentDirection] in legalMoves:
-                #if currentDirection is north; x+1
-                if currentDirection == Directions.NORTH:
-                    nextCoord = (currentCoord[0]+1, currentCoord[1])
-                elif currentDirection == Directions.EAST:
-                    #if currentD is east; y-1
-                    nextCoord = (currentCoord[0], currentCoord[1]-1)
-                elif currentDirection == Directions.SOUTH:
-                    #if currentD is south; x-1
-                    nextCoord = (currentCoord[0]-1, currentCoord[1])
-                elif currentDirection == Directions.WEST:
-                    #if currentD is west; y+1
-                    nextCoord = (currentCoord[0], currentCoord[1]+1)
 
-                return nextCoord
 
-            #go back if cant go right
-            if Directions.LEFT[left] in legalMoves:
-                #if currentDirection is north; y-1
-                if currentDirection == Directions.NORTH:
-                    nextCoord = (currentCoord[0], currentCoord[1]-1)
-                elif currentDirection == Directions.EAST:
-                    #if currentD is east; x-1
-                    nextCoord = (currentCoord[0]-1, currentCoord[1])
-                elif currentDirection == Directions.SOUTH:
-                    #if currentD is south; y+1
-                    nextCoord = (currentCoord[0], currentCoord[1]+1)
-                elif currentDirection == Directions.WEST:
-                    #if currentD is west; x+1
-                    nextCoord = (currentCoord[0]+1, currentCoord[1])
 
-                return nextCoord
 
 
 
